@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
-  <title>shittube – ultimate</title>
+  <title>shittube – multi engine</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;800&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <style>
@@ -12,42 +12,63 @@
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body { margin: 0; font-family: 'Noto Sans', sans-serif; background: var(--bg); color: var(--text); display: grid; grid-template-columns: 80px 1fr 320px; height: 100vh; overflow: hidden; }
     
-    /* SIDEBAR CHỈ CÓ 1 CÁI DUY NHẤT */
+    /* SIDEBAR */
     nav { background: var(--side); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 30px 0; }
-    .brand { font-size: 28px; font-weight: 900; color: var(--primary); margin-bottom: 40px; cursor: pointer; text-decoration: none; }
+    .brand { font-size: 26px; font-weight: 900; color: var(--primary); margin-bottom: 40px; cursor: pointer; text-decoration: none; }
     .nav-btn { color: #8e8e93; margin-bottom: 25px; cursor: pointer; background: none; border: none; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .nav-btn:hover, .nav-btn.active { color: var(--primary); }
-    
-    /* NỘI DUNG CHÍNH */
+    .engine-badge { font-size: 9px; font-weight: 800; background: var(--primary); color: #000; padding: 2px 5px; border-radius: 4px; margin-top: -5px; text-transform: uppercase; }
+
+    /* MAIN CONTENT */
     main { padding: 30px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
     .player-wrap { width: 100%; max-width: 900px; aspect-ratio: 16/9; background: #000; border-radius: 24px; overflow: hidden; box-shadow: 0 15px 50px rgba(0,0,0,0.6); border: 1px solid var(--border); }
     iframe { width: 100%; height: 100%; border: none; }
     .search-row { display: flex; gap: 15px; margin-top: 25px; width: 100%; max-width: 900px; }
     input { flex: 1; background: var(--card); border: 2px solid var(--border); color: var(--text); padding: 15px 25px; border-radius: 16px; outline: none; font-size: 1rem; }
+    input:focus { border-color: var(--primary); }
     .btn-go { background: var(--primary); color: #000; padding: 0 30px; border-radius: 16px; border: none; font-weight: 800; cursor: pointer; }
 
-    /* PLAYLIST */
+    /* ASIDE PLAYLIST */
     aside { background: var(--side); border-left: 1px solid var(--border); padding: 25px; overflow-y: auto; }
     .plist-item { background: var(--card); padding: 10px; border-radius: 18px; margin-bottom: 12px; display: flex; gap: 12px; cursor: pointer; border: 1px solid transparent; align-items: center; transition: 0.2s; }
     .plist-item:hover { border-color: var(--primary); transform: translateX(-5px); }
     .plist-item img { width: 80px; height: 45px; border-radius: 8px; object-fit: cover; }
     .plist-item b { font-size: 0.8rem; flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
+    /* ENGINE SELECTOR MODAL */
+    #engine-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 100; }
+    .modal-content { background: var(--card); padding: 30px; border-radius: 24px; width: 300px; text-align: center; border: 1px solid var(--border); }
+    .engine-opt { padding: 15px; margin: 10px 0; border-radius: 12px; background: var(--bg); cursor: pointer; font-weight: 800; border: 2px solid transparent; }
+    .engine-opt:hover, .engine-opt.active { border-color: var(--primary); color: var(--primary); }
+
     @media (max-width: 1024px) { body { grid-template-columns: 80px 1fr; } aside { display: none; } }
   </style>
 </head>
 <body>
+  <div id="engine-modal" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <h3 id="m-title">CHỌN ĐỘNG CƠ</h3>
+      <div class="engine-opt" id="opt-piped" onclick="setEngine('piped')">PIPED</div>
+      <div class="engine-opt" id="opt-invidious" onclick="setEngine('invidious')">INVIDIOUS</div>
+      <div class="engine-opt" id="opt-youtube" onclick="setEngine('youtube')">YOUTUBE (Standard)</div>
+    </div>
+  </div>
+
   <nav>
     <a href="#" class="brand" onclick="location.reload()">ST</a>
     <button class="nav-btn active"><span class="material-symbols-outlined">home</span></button>
-    <button class="nav-btn" onclick="toggleLang()"><span class="material-symbols-outlined">language</span><small id="l-text">EN</small></button>
+    <button class="nav-btn" onclick="openModal()">
+      <span class="material-symbols-outlined">settings_input_component</span>
+      <div class="engine-badge" id="curr-engine">PIPED</div>
+    </button>
+    <button class="nav-btn" onclick="toggleLang()"><span class="material-symbols-outlined">language</span><small id="l-text">VI</small></button>
     <button class="nav-btn" onclick="clearP()"><span class="material-symbols-outlined">delete_sweep</span></button>
     <button class="nav-btn" style="margin-top: auto;" onclick="toggleTheme()"><span class="material-symbols-outlined">palette</span></button>
   </nav>
 
   <main>
     <h2 id="h-title" style="width:100%; max-width:900px; font-weight:800; font-size:1.8rem">đang xem</h2>
-    <div class="player-wrap"><iframe id="player" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
+    <div class="player-wrap"><iframe id="player" allow="autoplay; encrypted-media" allowfullscreen src=""></iframe></div>
     <form class="search-row" onsubmit="playVid(event)">
       <input type="text" id="v-input" placeholder="Dán link tại đây..." required />
       <button type="submit" class="btn-go" id="b-txt">XẢ RÁC</button>
@@ -60,34 +81,67 @@
   </aside>
 
   <script>
-    const INSTANCE = "https://piped.video"; 
+    // Cấu hình các động cơ [cite: 1]
+    const engines = {
+      piped: "https://piped.video/embed/",
+      invidious: "https://yewtu.be/embed/",
+      youtube: "https://www.youtube-nocookie.com/embed/"
+    };
+
+    let currentId = "";
+    let engine = localStorage.getItem('sh-engine') || 'piped';
     let lang = localStorage.getItem('sh-lang') || 'vi';
 
     const langMap = {
-      en: { t: "watch", g: "GO", l: "PLAYLIST", p: "Paste link here..." },
-      vi: { t: "đang xem", g: "XẢ RÁC", l: "DANH SÁCH", p: "Dán link tại đây..." }
+      en: { t: "watch", g: "GO", l: "PLAYLIST", p: "Paste link here...", m: "SELECT ENGINE" },
+      vi: { t: "đang xem", g: "XẢ RÁC", l: "DANH SÁCH", p: "Dán link tại đây...", m: "CHỌN ĐỘNG CƠ" }
     };
 
-    function updateLang() {
+    function updateUI() {
       document.getElementById('h-title').innerText = langMap[lang].t;
       document.getElementById('b-txt').innerText = langMap[lang].g;
       document.getElementById('l-title').innerText = langMap[lang].l;
       document.getElementById('v-input').placeholder = langMap[lang].p;
       document.getElementById('l-text').innerText = lang.toUpperCase();
+      document.getElementById('m-title').innerText = langMap[lang].m;
+      document.getElementById('curr-engine').innerText = engine;
+      
+      // Đánh dấu engine đang chọn trong modal
+      document.querySelectorAll('.engine-opt').forEach(opt => opt.classList.remove('active'));
+      document.getElementById('opt-' + engine).classList.add('active');
     }
 
-    function toggleLang() { lang = lang === 'vi' ? 'en' : 'vi'; localStorage.setItem('sh-lang', lang); updateLang(); }
+    // Modal logic
+    function openModal() { document.getElementById('engine-modal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('engine-modal').style.display = 'none'; }
+    
+    function setEngine(name) {
+      engine = name;
+      localStorage.setItem('sh-engine', name);
+      updateUI();
+      closeModal();
+      // Nếu đang có video chạy, tải lại bằng engine mới 
+      if (currentId) refreshPlayer();
+    }
+
+    function toggleLang() { lang = lang === 'vi' ? 'en' : 'vi'; localStorage.setItem('sh-lang', lang); updateUI(); }
 
     function getID(url) {
       const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
       return url.match(reg)?.[1] || (url.length === 11 ? url : null);
     }
 
+    function refreshPlayer() {
+      let params = "?autoplay=1&modestbranding=1&rel=0";
+      document.getElementById('player').src = engines[engine] + currentId + params;
+    }
+
     async function playVid(e) {
       if(e) e.preventDefault();
       const id = getID(document.getElementById('v-input').value);
       if(!id) return;
-      document.getElementById('player').src = `${INSTANCE}/embed/${id}?autoplay=1`;
+      currentId = id;
+      refreshPlayer();
       
       try {
         const res = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${id}`);
@@ -99,7 +153,6 @@
 
     function save(id, title) {
       let list = JSON.parse(localStorage.getItem('sh-list') || '[]');
-      // Fix lỗi undefined từ bản cũ
       list = list.filter(i => i && i.id && i.title && i.title !== "undefined");
       if(!list.find(i => i.id === id)) {
         list.unshift({id, title});
@@ -112,7 +165,7 @@
       let list = JSON.parse(localStorage.getItem('sh-list') || '[]');
       list = list.filter(i => i && i.id && i.title && i.title !== "undefined");
       document.getElementById('plist').innerHTML = list.map(i => `
-        <div class="plist-item" onclick="document.getElementById('player').src='${INSTANCE}/embed/${i.id}?autoplay=1'">
+        <div class="plist-item" onclick="currentId='${i.id}'; refreshPlayer();">
           <img src="https://img.youtube.com/vi/${i.id}/mqdefault.jpg">
           <b>${i.title}</b>
         </div>
@@ -120,9 +173,21 @@
     }
 
     function clearP() { if(confirm("Xóa lịch sử?")) { localStorage.removeItem('sh-list'); render(); } }
-    function toggleTheme() { const b = document.documentElement; b.setAttribute("data-theme", b.getAttribute("data-theme") === "dark" ? "light" : "dark"); }
+    function toggleTheme() { 
+      const b = document.documentElement; 
+      const current = b.getAttribute("data-theme");
+      const next = current === "dark" ? "light" : "dark";
+      b.setAttribute("data-theme", next); 
+      localStorage.setItem("theme", next); // Lưu theme vào localStorage [cite: 44, 47]
+    }
 
-    window.onload = () => { updateLang(); render(); };
+    window.onload = () => { 
+      // Load theme từ bộ nhớ [cite: 43]
+      const savedTheme = localStorage.getItem("theme") || "dark";
+      document.documentElement.setAttribute("data-theme", savedTheme);
+      updateUI(); 
+      render(); 
+    };
   </script>
 </body>
 </html>
