@@ -1,0 +1,227 @@
+<script>
+  (function() {
+    var ua = navigator.userAgent;
+    // Kiểm tra xem có phải iOS không (iPhone/iPad/iPod)
+    var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    
+    if (isIOS) {
+      // Tìm số phiên bản iOS (ví dụ: OS 12_1_4)
+      var match = ua.match(/OS (\d+)_/);
+      if (match && match[1]) {
+        var version = parseInt(match[1], 10);
+        // Nếu iOS 12 hoặc cũ hơn (11, 10, 9...) thì chuyển trang
+        if (version <= 12) {
+          window.location.href = "legacy.html";
+        }
+      }
+    }
+    
+    // Mẹo cho iPad mới chạy iPadOS (nó thường giả dạng MacOS)
+    if (navigator.maxTouchPoints > 1 && /Macintosh/.test(ua)) {
+       // Với iPad mới thì cứ để nó ở bản Pro vì nó thừa sức chạy mượt!
+    }
+  })();
+</script> 
+ <!doctype html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>shittube – đa ngôn ngữ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #1c1c1e; --side: #121212; --card: #2c2c2e;
+      --text: #ffffff; --primary: #f4b400; --border: #3a3a3c;
+    }
+    [data-theme="light"] {
+      --bg: #f2f2f7; --side: #ffffff; --card: #ffffff;
+      --text: #1c1c1e; --primary: #007aff; --border: #d1d1d6;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { 
+      margin: 0; font-family: 'Noto Sans', sans-serif; 
+      background: var(--bg); color: var(--text);
+      display: grid; grid-template-columns: 80px 1fr 320px; height: 100vh;
+      transition: background 0.4s;
+    }
+
+    /* SIDEBAR */
+    nav { 
+      background: var(--side); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; align-items: center; padding: 30px 0;
+    }
+    .brand-vibe { font-size: 28px; font-weight: 900; color: var(--primary); margin-bottom: 40px; cursor:pointer; }
+    .nav-btn { color: #8e8e93; margin-bottom: 25px; cursor: pointer; background: none; border: none; transition: 0.2s; }
+    .nav-btn:hover, .nav-btn.active { color: var(--primary); }
+    .lang-text { font-size: 12px; font-weight: 800; }
+
+    /* CENTER PLAYER */
+    main { padding: 30px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
+    .content-area { width: 100%; max-width: 900px; }
+    .page-title { font-size: 2.5rem; font-weight: 800; margin-bottom: 20px; text-transform: lowercase; }
+
+    .player-wrap {
+      width: 100%; background: #000; border-radius: 24px; overflow: hidden;
+      aspect-ratio: 16 / 9; box-shadow: 0 15px 50px rgba(0,0,0,0.6); border: 1px solid var(--border);
+    }
+    iframe { width: 100%; height: 100%; border: none; }
+
+    .control-box { display: flex; gap: 15px; margin-top: 25px; }
+    input {
+      flex: 1; background: var(--card); border: 2px solid var(--border);
+      color: var(--text); padding: 15px 25px; border-radius: 16px; outline: none; font-size: 1rem;
+    }
+    .btn-go {
+      background: var(--primary); color: #000; padding: 0 30px; 
+      border-radius: 16px; border: none; font-weight: 800; cursor: pointer;
+    }
+
+    /* PLAYLIST SIDE */
+    aside { background: var(--side); border-left: 1px solid var(--border); padding: 25px; }
+    .plist-title { font-weight: 800; margin-bottom: 20px; font-size: 1.1rem; }
+    .plist-item {
+      background: var(--card); padding: 10px; border-radius: 18px; margin-bottom: 12px;
+      display: flex; gap: 12px; cursor: pointer; border: 1px solid transparent; transition: 0.2s;
+    }
+    .plist-item:hover { border-color: var(--primary); transform: translateX(-5px); }
+    .plist-item img { width: 100px; border-radius: 10px; }
+
+    @media (max-width: 1024px) {
+      body { grid-template-columns: 80px 1fr; }
+      aside { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="brand-vibe" onclick="location.reload()">S T</div>
+    <button class="nav-btn active" title="Home"><span class="material-symbols-outlined">home</span></button>
+    <button class="nav-btn" onclick="goLegacy()" title="Legacy Mode"><span class="material-symbols-outlined">history</span></button>
+    
+    <button class="nav-btn" onclick="toggleLang()" title="Switch Language">
+      <span class="material-symbols-outlined">language</span>
+      <div class="lang-text" id="lang-label">EN</div>
+    </button>
+
+    <button class="nav-btn" style="margin-top: auto;" onclick="toggleTheme()" title="Theme">
+      <span class="material-symbols-outlined">palette</span>
+    </button>
+  </nav>
+
+  <main>
+    <div class="content-area">
+      <h2 class="page-title" data-i18n="watch_title">watch</h2>
+      
+      <div class="player-wrap">
+        <iframe id="video-frame" src="" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+      </div>
+
+      <form class="control-box" onsubmit="doPlay(event)">
+        <input type="text" id="url-box" data-i18n-placeholder="input_placeholder" placeholder="Paste link here..." required />
+        <button type="submit" class="btn-go" data-i18n="btn_go">GO</button>
+      </form>
+    </div>
+  </main>
+
+  <aside>
+    <div class="plist-title" data-i18n="playlist_title">PLAYLIST</div>
+    <div id="plist-content"></div>
+  </aside>
+
+  <script>
+    // --- Dịch thuật ---
+    const i18n = {
+      en: {
+        watch_title: "watch",
+        input_placeholder: "Paste link or Video ID here...",
+        btn_go: "GO",
+        playlist_title: "PLAYLIST",
+        lang_label: "EN"
+      },
+      vi: {
+        watch_title: "đang xem",
+        input_placeholder: "Dán link hoặc mã video tại đây...",
+        btn_go: "XẢ RÁC",
+        playlist_title: "DANH SÁCH",
+        lang_label: "VI"
+      }
+    };
+
+    let currentLang = localStorage.getItem('sh-lang') || 'en';
+
+    function updateUI() {
+      // Dịch văn bản thuần
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.innerText = i18n[currentLang][key];
+      });
+      // Dịch placeholder
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        el.placeholder = i18n[currentLang][key];
+      });
+      document.getElementById('lang-label').innerText = currentLang.toUpperCase();
+    }
+
+    function toggleLang() {
+      currentLang = currentLang === 'en' ? 'vi' : 'en';
+      localStorage.setItem('sh-lang', currentLang);
+      updateUI();
+    }
+
+    // --- Xử lý chính ---
+    function toggleTheme() {
+      const b = document.documentElement;
+      b.setAttribute("data-theme", b.getAttribute("data-theme") === "dark" ? "light" : "dark");
+    }
+
+    function doPlay(e) {
+      e.preventDefault();
+      const val = document.getElementById('url-box').value;
+      const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+      const id = val.match(reg)?.[1] || (val.length === 11 ? val : null);
+      
+      if (id) {
+        document.getElementById('video-frame').src = `https://www.youtube.com/embed/${id}?autoplay=1&modestbranding=1`;
+        saveP(id);
+      }
+      document.getElementById('url-box').value = '';
+    }
+
+    function saveP(id) {
+      let list = JSON.parse(localStorage.getItem('sh-list') || '[]');
+      if (!list.includes(id)) {
+        list.unshift(id);
+        localStorage.setItem('sh-list', JSON.stringify(list.slice(0, 10)));
+        renderP();
+      }
+    }
+
+    function renderP() {
+      const list = JSON.parse(localStorage.getItem('sh-list') || '[]');
+      const container = document.getElementById('plist-content');
+      container.innerHTML = list.map(id => `
+        <div class="plist-item" onclick="document.getElementById('video-frame').src='https://www.youtube.com/embed/${id}?autoplay=1'">
+          <img src="https://img.youtube.com/vi/${id}/mqdefault.jpg">
+          <div style="font-size: 0.7rem; font-weight: 800;">${id}</div>
+        </div>
+      `).join('');
+    }
+
+    function goLegacy() {
+      window.location.href = "legacy.html";
+    }
+
+    window.onload = () => {
+      updateUI();
+      renderP();
+    };
+  </script>
+</body>
+</html>
+
