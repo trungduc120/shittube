@@ -1,19 +1,4 @@
-function play(id) {
-  if (!id) return;
-  const frame = document.getElementById('video-frame');
-  
-  // Thêm các tham số để chặn gợi ý và thương hiệu YouTube
-  const params = new URLSearchParams({
-    autoplay: 1,
-    modestbranding: 1, // Ẩn logo YouTube
-    rel: 0,            // Không hiện video liên quan khi kết thúc
-    iv_load_policy: 3, // Ẩn các chú thích/thẻ gợi ý trong video
-    showinfo: 0        // Ẩn thông tin video (với một số trình duyệt cũ)
-  });
 
-  // Thử dùng youtube-nocookie để tăng tính riêng tư
-  frame.src = `https://www.youtube-nocookie.com/embed/${id}?${params.toString()}`; [cite: 49]
-}
 <script>
   (function() {
     var ua = navigator.userAgent;
