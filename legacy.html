@@ -1,86 +1,89 @@
-<!doctype html>
-<html lang="vi">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <title>shittube legacy /title>
-  <style>
-    body { background: #121212; color: #fff; font-family: sans-serif; text-align: center; margin: 0; padding: 15px; }
-    h1 { color: #f4b400; font-size: 22px; margin-bottom: 15px; font-weight: 900; }
-    
-    .input-group { margin-bottom: 20px; width: 100%; display: block; }
-    input { width: 65%; padding: 12px; border-radius: 5px; border: 1px solid #333; background: #1e1e1e; color: #fff; font-size: 16px; }
-    button { padding: 12px 15px; border-radius: 5px; border: none; background: #f4b400; font-weight: bold; cursor: pointer; }
-
-    .video-frame { width: 100%; max-width: 800px; margin: 0 auto; background: #000; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border: 1px solid #333; display: none; }
-    .video-frame iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
-    
-    .engine-sw { margin-top: 15px; font-size: 12px; }
-    .engine-btn { color: #f4b400; cursor: pointer; text-decoration: underline; margin: 0 5px; }
-    .footer { margin-top: 40px; font-size: 12px; opacity: 0.5; }
-  </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>shittube legacy - ultra fix</title>
+    <style>
+        /* CSS cực kỳ cơ bản, không dùng Grid hay Variable */
+        body { 
+            background-color: #000000; 
+            color: #ffffff; 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            margin: 0; 
+            padding: 20px; 
+        }
+        h1 { color: #f4b400; font-size: 24px; }
+        .box { margin-bottom: 20px; }
+        input { 
+            width: 60%; 
+            padding: 10px; 
+            border: 1px solid #444; 
+            background: #222; 
+            color: #fff; 
+            font-size: 16px; 
+        }
+        button { 
+            padding: 10px 20px; 
+            background: #f4b400; 
+            border: none; 
+            font-weight: bold; 
+            cursor: pointer; 
+        }
+        /* Khung video kiểu cũ để không bị nát */
+        .video-container { 
+            width: 100%; 
+            max-width: 600px; 
+            margin: 20px auto; 
+            border: 1px solid #333; 
+            display: none; 
+        }
+        .footer { margin-top: 50px; font-size: 12px; }
+        a { color: #888; text-decoration: none; }
+    </style>
 </head>
 <body>
 
-  <h1>shittube legacy - made by trungduc120</h1>
+    <h1>shittube legacy</h1>
 
-  <div class="input-group">
-    <input type="text" id="v-url" placeholder="Dán link hoặc mã video...">
-    <button onclick="play()">GO</button>
-  </div>
+    <div class="box">
+        <input type="text" id="v-link" placeholder="Dán link hoặc mã video...">
+        <button onclick="playVideo()">GO</button>
+    </div>
 
-  <div id="v-box" class="video-frame">
-    <iframe id="player" src="" allowfullscreen></iframe>
-  </div>
+    <div id="v-box" class="video-container">
+        <iframe id="player" width="100%" height="315" src="" frameborder="0" allowfullscreen></iframe>
+    </div>
 
-  <div class="engine-sw">
-    Lag quá? Thử đổi server: 
-    <span class="engine-btn" onclick="changeEngine('yewtu.be')">Yewtu (Nhẹ nhất)</span> | 
-    <span class="engine-btn" onclick="changeEngine('piped.video')">Piped (Xịn)</span>
-  </div>
+    <div class="footer">
+        <a href="index.html">Về bản Modern Pro</a>
+    </div>
 
-  <div class="footer">
-    <a href="index.html" style="color:#888;">← Về bản Modern Pro</a>
-  </div>
+    <script>
+        // Dùng 'var' thay vì 'let/const' để iOS 12 không bị crash
+        function playVideo() {
+            var val = document.getElementById('v-link').value;
+            var id = "";
 
-  <script>
-    var currentId = "";
-    var currentEngine = "yewtu.be"; // Mặc định dùng Invidious cho nhẹ
+            // Cách tách ID thủ công cho trình duyệt cũ
+            if (val.indexOf('v=') !== -1) {
+                id = val.split('v=')[1].split('&')[0];
+            } else if (val.indexOf('youtu.be/') !== -1) {
+                id = val.split('youtu.be/')[1].split('?')[0];
+            } else {
+                id = val;
+            }
 
-    function play() {
-      var val = document.getElementById('v-url').value;
-      var id = "";
-      
-      // Trích xuất ID từ mọi loại link (m.youtube, youtu.be, youtube.com)
-      var match = val.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/|m\.youtube\.com\/watch\?v=)([^"&?\/\s]{11})/i);
-      id = match ? match[1] : (val.length === 11 ? val : "");
-
-      if (id) {
-        currentId = id;
-        loadVideo();
-      } else {
-        alert("Link không đúng bro ơi!");
-      }
-    }
-
-    function loadVideo() {
-      var url = "";
-      if (currentEngine.indexOf('piped') !== -1) {
-        url = "https://" + currentEngine + "/embed/" + currentId + "?autoplay=1";
-      } else {
-        // Cấu hình cho Invidious
-        url = "https://" + currentEngine + "/embed/" + currentId + "?autoplay=1&dark_mode=true";
-      }
-      
-      document.getElementById('player').src = url;
-      document.getElementById('v-box').style.display = "block";
-    }
-
-    function changeEngine(e) {
-      currentEngine = e;
-      if (currentId) loadVideo();
-      else alert("Dán link trước đã bro!");
-    }
-  </script>
+            if (id.length >= 11) {
+                // Dùng Invidious (yewtu.be) vì nó nhẹ nhất cho iPad mini 2
+                var embedUrl = "https://yewtu.be/embed/" + id.substring(0, 11) + "?autoplay=1";
+                document.getElementById('player').src = embedUrl;
+                document.getElementById('v-box').style.display = "block";
+            } else {
+                alert("ID không đúng rồi đại ca!");
+            }
+        }
+    </script>
 </body>
 </html>
