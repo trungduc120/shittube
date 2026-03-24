@@ -81,6 +81,11 @@
   </aside>
 
   <script>
+  // Cách kiểm tra đơn giản nhất cho máy đời cũ
+  if (navigator.userAgent.indexOf('OS 12_') !== -1 || navigator.userAgent.indexOf('OS 11_') !== -1 || navigator.userAgent.indexOf('OS 10_') !== -1) {
+    window.location.replace("legacy.html");
+  }
+</script>
     // Cấu hình các động cơ [cite: 1]
     const engines = {
       piped: "https://piped.video/embed/",
