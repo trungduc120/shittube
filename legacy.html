@@ -1,53 +1,61 @@
 <!doctype html>
-<html lang="vi" data-theme="dark">
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>shittube legacy</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>shittube legacy - ultra fix</title>
   <style>
-    :root { --bg: #121212; --text: #fff; --primary: #f4b400; }
-    [data-theme="light"] { --bg: #f8f9fa; --text: #1a1a1a; --primary: #e67e22; }
-    body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; padding: 50px 20px; }
-    .lang-nav { position: absolute; top: 20px; right: 20px; font-weight: 800; cursor: pointer; display: flex; gap: 10px; }
-    h1 { font-size: 3rem; font-weight: 900; color: var(--primary); margin-bottom: 30px; }
-    .search-row { display: flex; width: 100%; max-width: 700px; gap: 10px; margin-bottom: 30px; }
-    input { flex: 1; padding: 15px 25px; border-radius: 50px; border: 2px solid #333; background: #1e1e1e; color: #fff; font-size: 1rem; outline: none; }
-    button { padding: 0 35px; border-radius: 50px; border: none; background: var(--primary); color: #000; font-weight: 900; cursor: pointer; }
-    .vid-box { width: 100%; max-width: 1000px; aspect-ratio: 16/9; background: #000; border-radius: 20px; overflow: hidden; display: none; }
-    iframe { width: 100%; height: 100%; border: none; }
+    /* Dùng bảng màu đơn giản, không dùng biến root */
+    body { background: #121212; color: #ffffff; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
+    h1 { color: #f4b400; font-size: 24px; margin-bottom: 20px; }
+    
+    /* Ô nhập liệu kiểu cũ, không dùng Flexbox phức tạp */
+    .search-box { margin-bottom: 20px; width: 100%; }
+    input { width: 70%; padding: 12px; border-radius: 5px; border: 1px solid #333; background: #1e1e1e; color: #fff; }
+    button { padding: 12px 20px; border-radius: 5px; border: none; background: #f4b400; font-weight: bold; cursor: pointer; }
+
+    /* Khung video dùng tỷ lệ chiều cao cố định để không bị nát trên iOS cũ */
+    .video-container { width: 100%; max-width: 800px; margin: 0 auto; background: #000; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border: 1px solid #333; display: none; }
+    .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+    
+    .footer-link { margin-top: 30px; display: block; color: #888; text-decoration: none; font-size: 14px; }
   </style>
 </head>
 <body>
-  <div class="lang-nav">
-    <span onclick="setL('en')">EN</span> | <span onclick="setL('vi')">VN</span> | <span onclick="setL('un')">UN</span>
+
+  <h1>shittube legacy</h1>
+
+  <div class="search-box">
+    <input type="text" id="link" placeholder="Dán mã video hoặc link...">
+    <button onclick="play()">GO</button>
   </div>
-  <h1 id="L-title">shittube legacy</h1>
-  <form class="search-row" onsubmit="L_play(event)">
-    <input type="text" id="L-input" placeholder="Paste link here..." required />
-    <button type="submit" id="L-btn">GO</button>
-  </form>
-  <div class="vid-box" id="L-box"><iframe id="L-player" allowfullscreen></iframe></div>
-  <p style="margin-top:50px"><a href="index.html" style="color:inherit; opacity:0.5">← Back to Pro</a></p>
+
+  <div id="v-box" class="video-container">
+    <iframe id="player" src="" allowfullscreen></iframe>
+  </div>
+
+  <a href="index.html" class="footer-link">Về bản Modern Pro</a>
 
   <script>
-    const PIPED = "https://piped.video";
-    const dict = {
-      en: { t: "shittube legacy", p: "Paste link here...", b: "GO" },
-      vi: { t: "shittube cũ", p: "Dán link vào đây...", b: "XẢ" },
-      un: { t: "§hittub€ l€gacy", p: "§€arch...", b: "!!!" }
-    };
-    function setL(l) {
-      document.getElementById('L-title').innerText = dict[l].t;
-      document.getElementById('L-input').placeholder = dict[l].p;
-      document.getElementById('L-btn').innerText = dict[l].b;
-    }
-    function L_play(e) {
-      e.preventDefault();
-      const val = document.getElementById('L-input').value;
-      const id = val.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i)?.[1] || (val.length === 11 ? val : null);
-      if (id) {
-        document.getElementById('L-player').src = `${PIPED}/embed/${id}?autoplay=1`;
-        document.getElementById('L-box').style.display = 'block';
+    function play() {
+      var val = document.getElementById('link').value;
+      var id = "";
+      
+      // Trích xuất ID đơn giản
+      if(val.indexOf('v=') !== -1) {
+        id = val.split('v=')[1].split('&')[0];
+      } else if(val.indexOf('youtu.be/') !== -1) {
+        id = val.split('youtu.be/')[1];
+      } else {
+        id = val;
+      }
+
+      if(id.length >= 11) {
+        // Dùng Piped hoặc Invidious tùy chọn, ở đây mình dùng piped
+        document.getElementById('player').src = "https://piped.video/embed/" + id.substring(0,11) + "?autoplay=1";
+        document.getElementById('v-box').style.display = "block";
+      } else {
+        alert("ID không đúng!");
       }
     }
   </script>
